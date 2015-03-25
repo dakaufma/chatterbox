@@ -265,10 +265,16 @@ func (server *Server) newKeys(uid *[32]byte, keyList [][]byte) error {
 	}
 	return server.database.Write(batch, wO_sync)
 }
+
 func (server *Server) deleteMessages(uid *[32]byte, messageList [][32]byte) error {
 	batch := new(leveldb.Batch)
 	for _, messageHash := range messageList {
 		key := append(append([]byte{'m'}, uid[:]...), messageHash[:]...)
+		value, err := server.database.Get(key, nil)
+		if err != nil && value != nil {
+			debugKey := append([]byte{'D'}, key[:]...)
+			batch.Put(debugKey, value)
+		}
 		batch.Delete(key)
 	}
 	return server.database.Write(batch, wO_sync)
